@@ -55,3 +55,58 @@ In [2]: engine = create_engine('sqlite:///:test:', echo=True)
 
 ## Declare a Mapping
 
+
+当使用ORM的时候，配置过程以描述数据库的表来开始，然后我们定义与之匹配的类。在现在的SQLAlchemy中，这两个过程一般结合在一起，通过一个称之为声明（Declarative）的系统实现。这个系统帮我们定义类以及实现与表的对应。
+
+声明系统实现类与表的对应是通过一系列基类实现的--即声明基类（declarative base class)。我们的应用程序经常只有一个此基类的示例。使用```declarative_base()```函数，如下：
+
+```
+In [2]: from sqlalchemy.ext.declarative import declarative_base
+
+In [3]: Base = declarative_base()
+```
+
+有了"base"之后，我们可通过他定义任何数量的映射类。我们以一个user表来开始这个教程，user表记录了用我们应用的终端用户的信息。与之对应的类称之为User。表的信息包括表名，姓名，还有列的数据类型，如下：
+
+```
+from sqlalchemy import Column, Integer, String
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    fullname = Column(String) 
+    password = Column(String)
+ 
+    def __repr__(self):
+       return "<User(name='%s', fullname='%s', password='%s')>" % (self.name, self.fullname, self.password)
+```
+
+注：
+User class定义了一个 __repr__()函数，但是这并非必须的。使用它是为了在这个教程里使我们的例子（User对象）有更好看的格式。
+
+
+使用Declarative定义的类最少要包括一个 __tablename__ 参数，还有一列（作为数据库primary key）。SQLAlchemy自己从不做关于类所对应的表的任何假定，包括它没有任何于名称、数据类型或者约束内置的约束。但是并不代表没有一个规范的模式，相反，它鼓励你使用帮助函数和mixin类创建自己的自动规范约束，帮助函数和mixin类在Mixin和Custom Base Classes里有详细的描述。
+
+
+当构建类的时候，Declarative使用特殊的Python accessor（即[descriptors](https://docs.python.org/2/howto/descriptor.html)）代替了所有的Column对象；这个过程称之为instrumentation（中文意思：乐器）。这个"instrumented"过的类为我们的表提供了一种使用sql语句访问数据库中表的方式，同时也提供读取表中数据的方式（好特码复杂，原文：provide us with the means to refer to our table in a SQL context as well as to persist and load the values of columns from the database.）
+
+除此之外，还有一些普通的Python类，可以让我们定义一些用于我们应用的一般的参数。
+
+---
+
+
+## Create a Schema
+
+With our User class constructed via the Declarative system, we have defined information about our table, known as table metadata. The object used by SQLAlchemy to represent this information for a specific table is called the Table object, and here Declarative has made one for us. We can see this object by inspecting the __table__ attribute:
+
+>>> User.__table__ 
+Table('users', MetaData(bind=None),
+            Column('id', Integer(), table=<users>, primary_key=True, nullable=False),
+            Column('name', String(), table=<users>),
+            Column('fullname', String(), table=<users>),
+            Column('password', String(), table=<users>), schema=None)
+
+
+

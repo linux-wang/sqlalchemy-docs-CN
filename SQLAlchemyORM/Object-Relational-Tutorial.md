@@ -122,8 +122,6 @@ PS：
 
 ```Table``` 对象是一系列的元数据的组合。当使用Declarative的时候，这个对象可以使用我们declarative的基类的 ```.metadata``` 属性（When using Declarative, this object is available using the .metadata attribute of our declarative base class.）。
 
-The MetaData is a registry which includes the ability to emit a limited set of schema generation commands to the database. As our SQLite database does not actually have a users table present, we can use MetaData to issue CREATE TABLE statements to the database for all tables that don’t yet exist. Below, we call the MetaData.create_all() method, passing in our Engine as a source of database connectivity. We will see that special commands are first emitted to check for the presence of the users table, and following that the actual CREATE TABLE statement:
-
 元数据是一堆包含的可以在数据库里执行的命令集。因为我们的SQLite数据库目前还没有一个users表，我们可以使用这些元数据来创建这些表。下面，我们调用```MetaData.create_all()```方法来将这些传给数据库。然后就可以看到提交这些命令之后的过程，如下：
 
 ```

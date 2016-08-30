@@ -14,15 +14,15 @@ SQLAlchemy　ORM与SQLAlchemy表达式语言（SQLAlchemy Expression Language）
 ## Version Check(版本检查)
 
 使用以下代码检查SQLAlchemy版本
+
 ```
 In [2]: import sqlalchemy
-
 In [3]: sqlalchemy.__version__
 Out[3]: '1.0.13'
-
 ```
 
 PS: 安装SQLAlchemy过程，建议先安装[virtualenv](http://www.cnblogs.com/wswang/p/5391554.html)，再使用pip安装
+
 ```
 pip install sqlalchemy==1.0.13  # 版本号可自选，文档对应的为1.1.0
 ```
@@ -101,14 +101,82 @@ User class定义了一个 __repr__()函数，但是这并非必须的。使用�
 
 ## Create a Schema
 
-With our User class constructed via the Declarative system, we have defined information about our table, known as table metadata. The object used by SQLAlchemy to represent this information for a specific table is called the Table object, and here Declarative has made one for us. We can see this object by inspecting the __table__ attribute:
 
->>> User.__table__ 
+通过Declarative系统构建了类之后，我们也定义了被称之为表的元数据信息。被SQLAlchemy用来为某特定的表呈现这些信息的对象被称之为Table对象，Declarative系统为我们实现了这些。我们可以通过检测 __table__ 参数来查看这个对象：如下： 
+
+```
+# 代码接上面
+>>User.__table__ 
 Table('users', MetaData(bind=None),
             Column('id', Integer(), table=<users>, primary_key=True, nullable=False),
             Column('name', String(), table=<users>),
             Column('fullname', String(), table=<users>),
             Column('password', String(), table=<users>), schema=None)
+```
+
+PS：
+经典映射-Classical Mappings
+虽然在Declarative系统里十分推荐使用，但是对使用SQLAlchemy ORM来说也并非必须的。在Declarative系统外，任何一个Python类都可以通过```mapper()```函数来映射到一个数据表，但是用的相对较少，可以在[Classical Mappings](http://docs.sqlalchemy.org/en/latest/orm/mapping_styles.html#classical-mapping)看到介绍。
+
+当声明一个类的时候，Declarative系统使用Python元类来实现，这样就可以在类被声明之后还可以执行一些额外的操作（不懂的同学可以看一下元类的左右）；在这个过程中，会根据我们的指定创建一个Table对象，然后通过构建一个Mapper对象使之与类关联。这个对象是一个幕后的对象（behind-the-scenes object），以至于我们一般不直接与他打交道（虽然在我们需要的时候它也能我们提供很多信息）
+
+```Table``` 对象是一系列的元数据的组合。当使用Declarative的时候，这个对象可以使用我们declarative的基类的 ```.metadata``` 属性（When using Declarative, this object is available using the .metadata attribute of our declarative base class.）。
+
+The MetaData is a registry which includes the ability to emit a limited set of schema generation commands to the database. As our SQLite database does not actually have a users table present, we can use MetaData to issue CREATE TABLE statements to the database for all tables that don’t yet exist. Below, we call the MetaData.create_all() method, passing in our Engine as a source of database connectivity. We will see that special commands are first emitted to check for the presence of the users table, and following that the actual CREATE TABLE statement:
+
+元数据是一堆包含的可以在数据库里执行的命令集。因为我们的SQLite数据库目前还没有一个users表，我们可以使用这些元数据来创建这些表。下面，我们调用```MetaData.create_all()```方法来将这些传给数据库。然后就可以看到提交这些命令之后的过程，如下：
+
+```
+>>> Base.metadata.create_all(engine)
+SELECT ...
+PRAGMA table_info("users")
+()
+CREATE TABLE users (
+    id INTEGER NOT NULL, name VARCHAR,
+    fullname VARCHAR,
+    password VARCHAR,
+    PRIMARY KEY (id)
+)
+()
+COMMIT
+```
+
+#### Minimal Table Descriptions vs. Full Descriptions
+
+熟悉CREATE TABLE语法的同学可能注意到了我们刚刚创建VARCHAR列的时候没有指定长度，在SQLite和Postgresql里是允许的，但是在其他地方是被禁止的。所以如果你使用了其他的数据库同时想使用SQLAlchemy来创建一个表，那么可能需要给String type添加一个i长度，格式如下：
+
+```
+Column(String(50))
+```
+
+String和其他的Integer，Numeric等待都一样，除了创建表的时候其他时候用不到。
+
+除此之外，Firebird和Oracle需要指定一个主key，但是SQLAlchemy并不会自动生存。对于这种情况，你可以使用```Sequence```来实现：
+
+```
+from sqlalchemy import Sequence
+Column(Integer, Sequence('user_id_seq'), primary_key=True)
+```
+
+使用declarative来实现一个映射的完整应用如下：
+
+```
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, Sequence('user_id_seq'), primary_key=True)
+    name = Column(String(50))
+    fullname = Column(String(50))
+    password = Column(String(12))
+
+    def __repr__(self):
+        return "<User(name='%s', fullname='%s', password='%s')>" % (
+                                self.name, self.fullname, self.password)
+```
+
+我们展示了这个完整的表以此对比来显示两者的区别（最小结构vs完整版），完整的可以用来完成创建某种特定的很严格的需求的表。
+
+---
 
 
+## Create an Instance of the Mapped Class¶
 

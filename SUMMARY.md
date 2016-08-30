@@ -13,7 +13,7 @@
 * [SQLAlchemy Core](SQLAlchemyCore)
     - [SQL表达语言入门-SQL Expression Language Tutorial](SQLAlchemyCore/SQL-Expression-Language-Tutorial.md)
     - [SQL语句和表达式接口-SQL Statements and Expressions API](SQLAlchemyCore/SQL-Statements-and-Expressions-API.md)
-    -[范式定义语言-Scheme Definition Language](SQLAlchemyCore/Scheme-Definition-Language.md)
+    -[范式定义语言-Schema Definition Language](SQLAlchemyCore/Schema-Definition-Language.md)
     - [列和数据类型-Column and Data Types](SQLAlchemyCore/Column-and-Data Types.md)
     - [引擎和连接使用-Engine and Connection Use](SQLAlchemyCore/Engine-and-Connection-Use.md)
     - [核心API基础-Core API Basics](SQLAlchemyCore/Core-API-Basics.md)

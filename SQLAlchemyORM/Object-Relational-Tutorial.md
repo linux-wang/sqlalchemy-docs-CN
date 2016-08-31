@@ -176,5 +176,52 @@ class User(Base):
 ---
 
 
-## Create an Instance of the Mapped Class¶
+## Create an Instance of the Mapped Class
 
+
+声明完映射之后，我们来创建一个User对象，如下：
+
+```
+>>> ed_user = User(name='ed', fullname='Ed Jones', password='edspassword')
+>>> ed_user.name
+'ed'
+>>> ed_user.password
+'edspassword'
+>>> str(ed_user.id)
+'None'
+```
+
+
+注：
+__init__() 方法
+
+我们使用Declarative系统创建的类包含了一个构造函数，可以自动的接受并匹配关键词。当然也可以自定义一个 __init__() 函数，这样的话就会覆盖自带的。
+
+即使我们没有在构造函数里指定id，但是我们访问它的时候系统仍然给了一个默认的值（空值，和Python里其他的如果没有定义就会引起一个参数错误相反，这里不会有错误）。SQLAlchemy经常会在我们第一次使用的时候去给参数赋一个值。对于那些我们已经赋值的参数，仪器系统（instrumentation system）会在插入语句执行的时候跟踪这些参数（SQLAlchemy’s instrumentation normally produces this default value for column-mapped attributes when first accessed. For those attributes where we’ve actually assigned a value, the instrumentation system is tracking those assignments for use within an eventual INSERT statement to be emitted to the database.）。
+
+
+---
+
+## Creating a Session
+
+
+现在我们开始讨论数据库。ORM处理数据库的方式是通过Session来实现的。当我们第一次创建这个应用的时候，我们使用```create_engine()```语句，同时也定义一个Session类来当做一个工厂来处理Session对象（When we first set up the application, at the same level as our create_engine() statement, we define a Session class which will serve as a factory for new Session objects）：
+
+```
+>>> from sqlalchemy.orm import sessionmaker
+>>> Session = sessionmaker(bind=engine)
+```
+
+如果此时你还没有一个engine对象，那么可以使用下面这种方法：
+
+```
+>>> Session = sessionmaker()
+```
+
+然后再创建一个engine（使用 ```create_engine()```）,然后使用configure来连接session和engine：
+
+```
+>>> Session.configure(bind=engine)  # once engine is available
+```
+
+This custom-made Session class will create new Session objects which are bound to our database. Other transactional characteristics may be defined when calling sessionmaker as well; these are described in a later chapter. Then, whenever you need to have a conversation with the database, you instantiate a Session:

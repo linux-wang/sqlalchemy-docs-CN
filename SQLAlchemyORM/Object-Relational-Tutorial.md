@@ -224,4 +224,14 @@ __init__() 方法
 >>> Session.configure(bind=engine)  # once engine is available
 ```
 
-This custom-made Session class will create new Session objects which are bound to our database. Other transactional characteristics may be defined when calling sessionmaker as well; these are described in a later chapter. Then, whenever you need to have a conversation with the database, you instantiate a Session:
+这个定制后的类会创建一个绑定到我们指定数据库的Session对象，其他的交易特征也可以在调用sessionmaker的时候定义。这些东西会在下一章讨论。然后当你需要与数据库进行对话的时候，你需要创建一个Session实例：
+
+```
+>>> session = Session()
+```
+
+上面的Session是和我们的SQLite-enabled引擎相关联的，但是现在还没有与数据库链接。当他第一次被调用的时候才会建立与一个Engine维护的连接池连接，一直持续到我们关闭Session对象，或者提交完所有的变化。
+
+Session Lifecycle Patterns
+
+The question of when to make a Session depends a lot on what kind of application is being built. Keep in mind, the Session is just a workspace for your objects, local to a particular database connection - if you think of an application thread as a guest at a dinner party, the Session is the guest’s plate and the objects it holds are the food (and the database...the kitchen?)! More on this topic available at When do I construct a Session, when do I commit it, and when do I close it?.

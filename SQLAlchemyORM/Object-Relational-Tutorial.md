@@ -232,6 +232,10 @@ __init__() 方法
 
 上面的Session是和我们的SQLite-enabled引擎相关联的，但是现在还没有与数据库链接。当他第一次被调用的时候才会建立与一个Engine维护的连接池连接，一直持续到我们关闭Session对象，或者提交完所有的变化。
 
-Session Lifecycle Patterns
+PS:
+会话的生命周期模式（Session Lifecycle Patterns）
 
-The question of when to make a Session depends a lot on what kind of application is being built. Keep in mind, the Session is just a workspace for your objects, local to a particular database connection - if you think of an application thread as a guest at a dinner party, the Session is the guest’s plate and the objects it holds are the food (and the database...the kitchen?)! More on this topic available at When do I construct a Session, when do I commit it, and when do I close it?.
+说明时候创建一个会话依赖于我们在创建一个说明应用。记住，对话只是你对象指向一个数据库链接的一个工作空间，如果把对象进程比作一个晚宴，那么来宾的盘子还有盘子上的食物则是回话（数据库就是厨房？）！更多的了解请连链接－[什么时候创建会话，什么时候提交，什么时候关闭](http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate)。
+
+## 添加／更新对象（Adding and Updating Objects）
+

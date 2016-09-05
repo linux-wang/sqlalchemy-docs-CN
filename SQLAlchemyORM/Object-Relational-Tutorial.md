@@ -237,5 +237,95 @@ PS:
 
 说明时候创建一个会话依赖于我们在创建一个说明应用。记住，对话只是你对象指向一个数据库链接的一个工作空间，如果把对象进程比作一个晚宴，那么来宾的盘子还有盘子上的食物则是回话（数据库就是厨房？）！更多的了解请连链接－[什么时候创建会话，什么时候提交，什么时候关闭](http://docs.sqlalchemy.org/en/latest/orm/session_basics.html#session-faq-whentocreate)。
 
+---
+
 ## 添加／更新对象（Adding and Updating Objects）
+
+
+为了持续操作(persist)我们的 ```User``` 对象，我们把他添加（```add()```）到会话中：
+
+```
+>>> ed_user = User(name='ed', fullname='Ed Jones', password='edspassword')
+>>> session.add(ed_user)
+```
+
+现在，我们称这个对象是待定的（pending）；现在没有任何SQL语句被执行，同时这个对象也并代表数据库中的一行数据。对话（Session）会在需要的时候尽快持久化 ```Ed Jones```，这个过程称之为 **flush** 。如果我们在数据库里查询```Ed Jones```，所以的待定信息（pending information）都会首先被**flush**（冲刷？），随机查询请求被执行。
+
+For example, below we create a new Query object which loads instances of User. We “filter by” the name attribute of ed, and indicate that we’d like only the first result in the full list of rows. A User instance is returned which is equivalent to that which we’ve added:
+例如，下面我们创建一个```User```实例的查询对象，我们使用名字属性来过滤```ed```，然后只选取列表里的第一个数据。返回结果就是我们之前添加的那个```User```对象：
+
+```
+>>> our_user = session.query(User).filter_by(name='ed').first() # doctest:+NORMALIZE_WHITESPACE
+>>> our_user
+<User(name='ed', fullname='Ed Jones', password='edspassword')>
+```
+
+实际上，会话（Session）已经识别出这行数据已经在内部的map对象中了（In fact, the Session has identified that the row returned is the same row as one already represented within its internal map of objects, so we actually got back the identical instance as that which we just added:），所以我们拿回的数据就是之前刚刚添加的那个：
+
+```
+>>> ed_user is our_user
+True
+```
+
+ORM的概念在工作的地方会识别并且保证会是在一个特殊的行上。一旦一个对象已经在会话中有一个主键（primary key），所有关于这个key的SQL查询都只返回一个同样的Python对象，如果已经存在某个主键的对象，此时想添加一个同样主键的对象，就会引起一个错误。
+
+我们可以使用```add_all()```函数一次性添加多个```User```对象：
+
+```
+>>> session.add_all([
+...     User(name='wendy', fullname='Wendy Williams', password='foobar'),
+...     User(name='mary', fullname='Mary Contrary', password='xxg527'),
+...     User(name='fred', fullname='Fred Flinstone', password='blah')])
+
+```
+
+同样，我们如果觉得Ed的密码不太安全，也可以更改密码：
+
+```
+>>> ed_user.password = 'f8s7ccs'
+```
+
+而会话则时刻注意着这些变化，例如，他检测到了```Ed Jones```已经被更改了：
+
+```
+>>> session.dirty
+IdentitySet([<User(name='ed', fullname='Ed Jones', password='f8s7ccs')>])
+```
+
+同时，３个新的```User```对象处于等待提交的状态：
+
+```
+>>> session.new  # doctest: +SKIP
+IdentitySet([<User(name='wendy', fullname='Wendy Williams', password='foobar')>,
+<User(name='mary', fullname='Mary Contrary', password='xxg527')>,
+<User(name='fred', fullname='Fred Flinstone', password='blah')>])
+```
+
+我们通知会话（Session）我们想保留所以的更改然后提交到数据库。使用```commit()```提交这些更改，会话提交```UPDATE```语句来更改```ed```的密码，同时使用```INSERT```语句来实现新的对象的插入：
+
+```
+>>> session.commit()
+```
+
+
+```commit()```函数将所有更改记录到数据库中，然后提交这个事务。然后会话使用的连接资源会扔回到连接池里。随后session的操作会在新的事务中出现，同时会重新获得所需有的连接资源。
+
+If we look at Ed’s id attribute, which earlier was None, it now has a value:
+如果我们看Ed的id属性，之前我们没有设置，但是现在他有一个值了：
+
+```
+>>> ed_user.id # doctest: +NORMALIZE_WHITESPACE
+1
+```
+
+当会话在数据中中插入了新的行之后，所有新生成的标识符还有数据库为对象生成的一些默认值都是可以获取到的，同时是可以立即访问的或者可以一次获取到的（load-on-first-access）。在这种情况下，一行数据是重新加载的因为在提交之后就开始了一个新的事务。SQLAlchemy在新的事务中会从上一个事务中去获取更新的数据，这样大部分最近使用的语句都可获取到。重新加载的级别是可以定义的，可以去[这里](http://docs.sqlalchemy.org/en/latest/orm/session.html)查看。
+
+PS:
+会话对象的状态－Session Object States
+
+如果我们的```User```对象从```Session```外移到里边，为了真正的插入，他会经历三个状态（一共有四个状态）－短暂，等待，持久化（transient, pending, and persistent）。知道这几个状态的含义非常有帮助，推荐去[这里](http://docs.sqlalchemy.org/en/latest/orm/session_state_management.html#session-object-states)详细理解一下。
+
+---
+
+## 回滚（Rolling Back）
 

@@ -325,7 +325,54 @@ PS:
 
 如果我们的```User```对象从```Session```外移到里边，为了真正的插入，他会经历三个状态（一共有四个状态）－短暂，等待，持久化（transient, pending, and persistent）。知道这几个状态的含义非常有帮助，推荐去[这里](http://docs.sqlalchemy.org/en/latest/orm/session_state_management.html#session-object-states)详细理解一下。
 
+
 ---
 
 ## 回滚（Rolling Back）
+
+既然会话在一个事务里边起作用，那么我们也可以在这个事务里回滚一些变化。让我们做两个更改，然后再删掉更改，把```ed_user```的用户名改成```Edwardo```
+
+```
+>>> ed_user.name = 'Edwardo'
+```
+
+然后添加另外一个错误的假用户：
+
+```
+>>> fake_user = User(name='fakeuser', fullname='Invalid', password='12345')
+>>> session.add(fake_user)
+```
+
+查询会话，我们可以看到这些已经放到了现在所处的事务当中：
+
+```
+>>> session.query(User).filter(User.name.in_(['Edwardo', 'fakeuser'])).all()
+[<User(name='Edwardo', fullname='Ed Jones', password='f8s7ccs')>, <User(name='fakeuser', fullname='Invalid', password='12345')>]
+```
+
+回滚一下，我们就看到```ed_user```的用户名已经改回了```ed```，假用户也不存在了：
+
+```
+>>> session.rollback()
+
+SQL>>> ed_user.name
+u'ed'
+>>> fake_user in session
+False
+```
+
+执行一个选择语句来看看对数据库的影响：
+
+```
+>>> session.query(User).filter(User.name.in_(['ed', 'fakeuser'])).all()
+[<User(name='ed', fullname='Ed Jones', password='f8s7ccs')>]
+```
+
+
+----
+
+## 查询（Quering）
+
+
+
 

@@ -374,5 +374,102 @@ False
 ## 查询（Quering）
 
 
+一个```Query```对象是通过```Session```里的```query()```方法来创建的。这个方法有一些参数，参数可以是一些内置的类或者描述符。下面我们声明一个```User```实例的查询对象。当我们执行这些语句的时候，就可以看到```User```对象返回来的查询列表：
+
+```
+>>> for instance in session.query(User).order_by(User.id):
+...     print(instance.name, instance.fullname)
+ed Ed Jones
+wendy Wendy Williams
+mary Mary Contrary
+fred Fred Flinstone
+```
+
+```Query```也可以接受ORM内置的描述符当参数，任何时候多个类实体或者基于列的实体也可以作为查询方法```query()```的参数，返回如下的结果：
+
+```
+>>> for name, fullname in session.query(User.name, User.fullname):
+...     print(name, fullname)
+ed Ed Jones
+wendy Wendy Williams
+mary Mary Contrary
+fred Fred Flinstone
+```
+
+```Query```返回的结果称之为元组（tuples），通过```KeyedTuple```class实现，同时可以被当做Python的原生对象来处理。参数的名称和参数一样，类名和类一样（不知道咋翻译，原文： The names are the same as the attribute’s name for an attribute, and the class name for a class，看例子理解的意思就是：row对应的是User, 想获取name就使用row.name，这样row和row.name分别都有其对应的User，User.name了）：
+
+```
+>>> for row in session.query(User, User.name).all():
+...    print(row.User, row.name)
+<User(name='ed', fullname='Ed Jones', password='f8s7ccs')> ed
+<User(name='wendy', fullname='Wendy Williams', password='foobar')> wendy
+<User(name='mary', fullname='Mary Contrary', password='xxg527')> mary
+<User(name='fred', fullname='Fred Flinstone', password='blah')> fred
+```
+
+可以使用类元素衍生的一个对象```lable()```构造（construct）来给一列起另外的称呼，任何一个类的参数都可以这样使用（功能就像名字一样，打标签，起别名）：
+
+```
+>>> for row in session.query(User.name.label('name_label')).all():
+...    print(row.name_label)
+ed
+wendy
+mary
+fred
+```
+
+这里把这个名字给了```User```（实际上是给了User里的name），但是如果有两个参数呢（query()里有两个参数的情况，上面的例子只有一个）？可以使用```aliased()```来解决（和bash里的alias差不多）:
+
+```
+>>> from sqlalchemy.orm import aliased
+>>> user_alias = aliased(User, name='user_alias')
+
+>>> for row in session.query(user_alias, user_alias.name).all():
+...    print(row.user_alias)
+<User(name='ed', fullname='Ed Jones', password='f8s7ccs')>
+<User(name='wendy', fullname='Wendy Williams', password='foobar')>
+<User(name='mary', fullname='Mary Contrary', password='xxg527')>
+<User(name='fred', fullname='Fred Flinstone', password='blah')>
+```
+
+```Query```的基本操作包括了```LIMIT```和```OFFSET```，但是更简单的是使用Pyhton的切片或者更典型的是使用```ORDER_BY```:
+
+```
+>>> for u in session.query(User).order_by(User.id)[1:3]:
+...    print(u)
+<User(name='wendy', fullname='Wendy Williams', password='foobar')>
+<User(name='mary', fullname='Mary Contrary', password='xxg527')>
+```
+
+过滤结果使用```filter_by()```来实现，使用的参数是关键字：
+
+```
+>>> for name, in session.query(User.name).filter_by(fullname='Ed Jones'):
+...    print(name)
+ed
+```
+
+或者使用```filter()```，```filter()```使用更灵活的SQL语句的结构来过滤。这可以让你使用规律的Python操作符来操作你映射的类参数：
+
+```
+>>> for name, in session.query(User.name).filter(User.fullname=='Ed Jones'):
+...    print(name)
+ed
+```
+
+```Query```对象是完全可繁殖的（fully generative），意味着大多数方法的调用都返回一个新的```Query```对象（ a new Query object upon which further criteria may be added.）此对象仍可进行查询操作（不知道理解对不对），例如，你可以调两次```filter()```函数来查用户名为ｅｄ并且全名为Ｅｄ　Ｊｏｎｅｓ的用户，相当于SQL中的AND操作：
+
+```
+>>> for user in session.query(User).\
+...          filter(User.name=='ed').\
+...          filter(User.fullname=='Ed Jones'):
+...    print(user)
+<User(name='ed', fullname='Ed Jones', password='f8s7ccs')>
+```
+
+
+---
+## 常用过滤操作（Common Filter Operators）
+
 
 

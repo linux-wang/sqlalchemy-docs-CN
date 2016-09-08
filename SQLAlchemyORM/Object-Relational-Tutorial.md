@@ -457,7 +457,7 @@ ed
 ed
 ```
 
-```Query```对象是完全可繁殖的（fully generative），意味着大多数方法的调用都返回一个新的```Query```对象（ a new Query object upon which further criteria may be added.）此对象仍可进行查询操作（不知道理解对不对），例如，你可以调两次```filter()```函数来查用户名为ｅｄ并且全名为Ｅｄ　Ｊｏｎｅｓ的用户，相当于SQL中的AND操作：
+```Query```对象是完全可繁殖的（fully generative），意味着大多数方法的调用都返回一个新的```Query```对象（ a new Query object upon which further criteria may be added.）此对象仍可进行查询操作（不知道理解对不对），例如，你可以调两次```filter()```函数来查用户名为ed并且全名为Ed Jones的用户，相当于SQL中的AND操作：
 
 ```
 >>> for user in session.query(User).\

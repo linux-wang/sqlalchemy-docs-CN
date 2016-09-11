@@ -471,5 +471,97 @@ ed
 ---
 ## 常用过滤操作（Common Filter Operators）
 
+这里是一份常用过滤操作的摘要：
+
+* ```equals```
+
+```
+query.filter(User.name == 'ed')
+```
+
+* ```not equals```
+
+```
+query.filter(User.name != 'ed')
+```
+
+* ```LIKE```
+
+```
+query.filter(User.name.like('%ed%'))
+```
+
+* ```IN```
+
+```
+query.filter(User.name.in_(['ed', 'wendy', 'jack']))
+
+# works with query objects too:
+query.filter(User.name.in_(
+        session.query(User.name).filter(User.name.like('%ed%'))
+))
+```
+
+* ```NOT IN```
+
+```
+query.filter(~User.name.in_(['ed', 'wendy', 'jack']))
+```
+
+* ```IS NULL```
+
+```
+query.filter(User.name == None)
+
+# alternatively, if pep8/linters are a concern
+query.filter(User.name.is_(None))
+```
+
+* ```IS NOT NULL```
+
+```
+query.filter(User.name != None)
+
+# alternatively, if pep8/linters are a concern
+query.filter(User.name.isnot(None))
+```
+
+* ```AND```
+
+```
+# use and_()
+from sqlalchemy import and_
+query.filter(and_(User.name == 'ed', User.fullname == 'Ed Jones'))
+
+# or send multiple expressions to .filter()
+query.filter(User.name == 'ed', User.fullname == 'Ed Jones')
+
+# or chain multiple filter()/filter_by() calls
+query.filter(User.name == 'ed').filter(User.fullname == 'Ed Jones')
+```
+**注意** 是 ```and_()``` 不是Python里的```and```操作符
+
+* ```OR```
+
+```
+from sqlalchemy import or_
+query.filter(or_(User.name == 'ed', User.name == 'wendy'))
+```
+
+**注意** 是 ```or_()``` 不是Python里的```or```操作符
 
 
+* ```MATCH```
+
+```
+query.filter(User.name.match('wendy'))
+```
+
+**注意** ```match()``` 使用```MATCH``` 或者 ```CONTAINS``` 来实现的，所以和数据库底层有关，在一些数据库下不能使用，比如说SQLite
+
+
+---
+
+## 查询返回的列表以及数量（Returning Lists and Scalars）
+
+ 

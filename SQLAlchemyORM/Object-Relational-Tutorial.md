@@ -562,6 +562,56 @@ query.filter(User.name.match('wendy'))
 
 ---
 
-## 查询返回的列表以及数量（Returning Lists and Scalars）
+## 查询返回的列表以及标量（Returning Lists and Scalars）
 
- 
+```Query```的一些函数立刻去执行SQL语句并返回数据库里的一些查询结果，这里有一个简短的介绍：
+
+* ```all()```返回一个列表：
+
+```
+>>> query = session.query(User).filter(User.name.like('%ed')).order_by(User.id)
+>>> query.all()
+[<User(name='ed', fullname='Ed Jones', password='f8s7ccs')>,
+      <User(name='fred', fullname='Fred Flinstone', password='blah')>]
+```
+
+* ```first()``` 对查询结果进行了一个限制-返回列表的第一个值：
+
+```
+>>> query.first()
+<User(name='ed', fullname='Ed Jones', password='f8s7ccs')>
+```
+
+* ```one()```完全匹配所以行，如果匹配不到，则返回一个错误，或者匹配到多个值也会返回错误：
+
+```
+# 多个值
+>>> user = query.one()
+Traceback (most recent call last):
+...
+MultipleResultsFound: Multiple rows were found for one()
+
+# 匹配不到
+>>> user = query.filter(User.id == 99).one()
+Traceback (most recent call last):
+...
+NoResultFound: No row was found for one()
+```
+
+```one()```对于那些希望分别处理查询不到与查询到多个值的系统是十分好的，比方说在RESTful API中，查询不到可能会返回404页面，多个结果则可能希望返回一个应用错误。
+
+* ```one_or_none()```和```one()```很像，除了在查询不到的时候。查询不到的时候```one_or_none()```会直接返回None，但是在找到多个值的时候和```one()```一样。
+
+* ```scalar()```援引自```one()```函数，查询成功之后会返回这一行的第一列参数，如下：
+
+```
+>>> query = session.query(User.id).filter(User.name == 'ed').\
+...    order_by(User.id)
+>>> query.scalar()
+1
+```
+
+---
+
+## 使用SQL语句查询（Using Textual SQL）
+

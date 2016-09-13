@@ -669,11 +669,10 @@ SQL>>> session.query(User.id, User.name).\
 
 ## 计数（Counting）
 
-
 ```Qurey```里包括了一个十分好用的的技术函数```count()```：
 
 ```
->>> session.query(User).filter(User.name.like('%ed')).count()
+>>>session.query(User).filter(User.name.like('%ed')).count()
 2
 ```
 

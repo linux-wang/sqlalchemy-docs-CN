@@ -668,3 +668,40 @@ SQL>>> session.query(User.id, User.name).\
 ---
 
 ## 计数（Counting）
+
+```Qurey```里包括了一个十分好用的的技术函数```count()```：
+
+```
+>>> session.query(User).filter(User.name.like('%ed')).count()
+2
+```
+
+```count()```函数是用来计算返回值里包含多少项的，SQLAlchemy总是把查询结果放到一个子集里边，```count()```函数就是用来计算子集的。有些例子下面可以直接使用```SELECT count(*) FROM table```来计算有多少个值，但是SQLAlchemy并不去判断这是否是恰当的，毕竟准确的结果可以使用那个准确的方法去获得（however modern versions of SQLAlchemy don’t try to guess when this is appropriate, as the exact SQL can be emitted using more explicit means.）
+
+需要我们对每一项分别计数的时候，我们需要在```func```模块里通过```func.count()```来直接指定```count()```函数，下面我们可以单独计算一下每个名称的数量：
+
+```
+>>> from sqlalchemy import func
+SQL>>> session.query(func.count(User.name), User.name).group_by(User.name).all()
+[(1, u'ed'), (1, u'fred'), (1, u'mary'), (1, u'wendy')]
+```
+
+为了实现```SELECT count(*) FROM table```的功能，我们可以这样做：
+
+```
+>>> session.query(func.count('*')).select_from(User).scalar()
+4
+```
+
+如果我们直接根据```User```的主键来计算，那么```select_from()```可以去掉：
+
+```
+>>> session.query(func.count(User.id)).scalar()
+4
+```
+
+
+---
+
+## Building a Relationship¶
+

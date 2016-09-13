@@ -615,3 +615,56 @@ NoResultFound: No row was found for one()
 
 ## 使用SQL语句查询（Using Textual SQL）
 
+
+```Query```可以非常灵活的使用一些字面上的字符，通过```text()```构造来实现，同时可以与一些常见的方法结合使用。比方说```filter()```和```order_by()```：
+
+```
+>>> from sqlalchemy import text
+SQL>>> for user in session.query(User).filter(text("id<224")).order_by(text("id")).all():
+...     print(user.name)
+ed
+wendy
+mary
+fred
+```
+
+使用基于字符串的SQL语句（string-based SQL）可以通过冒号来指定参数。为参数复制可以使用```params()```来实现：
+
+```
+>>> session.query(User).filter(text("id<:value and name=:name")).params(value=224, name='fred').order_by(User.id).one()
+<User(name='fred', fullname='Fred Flinstone', password='blah')>
+```
+
+为了使用完全基于字符串的语句，可以使用```from_statement()```来实现。不需要额外的指定，完全的字符串SQL语句是根据模型（model）的名字来匹配的，如下，我们仅使用了一个星号就获取到了所有的信息（查找名字为ed的行）：
+
+```
+>>> session.query(User).from_statement(
+...                     text("SELECT * FROM users where name=:name")).\
+...                     params(name='ed').all()
+[<User(name='ed', fullname='Ed Jones', password='f8s7ccs')>]
+```
+
+在简单的例子中去根据名字匹配是可行的，但是当处理包含着重复的名字的复杂的语句的时候或者使用匿名的ORM架构的时候就不太现实了（unwieldy when dealing with complex statements that contain duplicate column names or when using anonymized ORM constructs that don’t easily match to specific names）。除此之外，有一个典型的表现就是在我们匹配结果的时候，我们可能会发现处理找到的结果也是十分有必要的。在这种情况下，```text()```架构允许我们把纯SQL语句与ORM映射对应起来，我们通过```TextClause.columns()```方法可以传一些表达式参数：
+
+```
+>>> stmt = text("SELECT name, id, fullname, password "
+...             "FROM users where name=:name")
+>>> stmt = stmt.columns(User.name, User.id, User.fullname, User.password)
+SQL>>> session.query(User).from_statement(stmt).params(name='ed').all()
+[<User(name='ed', fullname='Ed Jones', password='f8s7ccs')>]
+```
+
+当在```text()```架构里查找的时候，```Query```可能会指定一些返回的实体，比如不返回全部的，只返回一部分信息：
+
+```
+>>> stmt = text("SELECT name, id FROM users where name=:name")
+>>> stmt = stmt.columns(User.name, User.id)
+SQL>>> session.query(User.id, User.name).\
+...          from_statement(stmt).params(name='ed').all()
+[(1, u'ed')]
+```
+
+
+---
+
+## 计数（Counting）
